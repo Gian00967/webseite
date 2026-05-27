@@ -14,9 +14,11 @@ let ai = 'O';
 // So bleibt die Gewinnchance näher bei 50 %.
 const AI_OPTIMAL_RATE = 0.5;
 let gameOver = false;
+let autoRestartTimeout = null;
 let scores = { human: 0, ai: 0, tie: 0 };
 
 function init(){
+  clearAutoRestart();
   clearVictoryAnimation();
   clearLossScreen();
   boardEl.innerHTML = '';
@@ -101,6 +103,7 @@ function endGame(){
     }
     saveScores();
     renderScores();
+    scheduleNextRound();
     return;
   }
   statusEl.textContent = 'Dein Zug (X)';
@@ -172,6 +175,23 @@ function clearVictoryAnimation(){
   document.querySelectorAll('.confetti-piece').forEach(el => el.remove());
 }
 
+function clearAutoRestart(){
+  if(autoRestartTimeout){
+    clearTimeout(autoRestartTimeout);
+    autoRestartTimeout = null;
+  }
+}
+
+function scheduleNextRound(){
+  clearAutoRestart();
+  autoRestartTimeout = setTimeout(()=>{
+    clearVictoryAnimation();
+    clearLossScreen();
+    init();
+    render();
+  }, 1200);
+}
+
 // Minimax für perfekten Computergegner
 function bestMove(){
   const moves = [];
@@ -187,13 +207,13 @@ function bestMove(){
   moves.sort((a,b)=>b.score - a.score);
   const bestScore = moves[0].score;
   const bestMoves = moves.filter(m=>m.score===bestScore).map(m=>m.idx);
-  // Mit einer Wahrscheinlichkeit macht die KI absichtlich einen suboptimalen Zug
-  if(Math.random() >= AI_OPTIMAL_RATE && moves.length > 1){
-    const nonBest = moves.filter(m=>m.score < bestScore).map(m=>m.idx);
-    if(nonBest.length > 0) return nonBest[Math.floor(Math.random()*nonBest.length)];
+  const nonBestMoves = moves.filter(m=>m.score < bestScore).map(m=>m.idx);
+  // KI spielt optimal mit 50 % Wahrscheinlichkeit.
+  // Dadurch liegt die Gewinnchance für den Spieler näher bei 50 %.
+  if(Math.random() < AI_OPTIMAL_RATE || nonBestMoves.length === 0){
+    return bestMoves[Math.floor(Math.random()*bestMoves.length)];
   }
-  // sonst einen zufälligen besten Zug wählen (falls mehrere gleich gut sind)
-  return bestMoves[Math.floor(Math.random()*bestMoves.length)];
+  return nonBestMoves[Math.floor(Math.random()*nonBestMoves.length)];
 }
 
 function minimax(b, depth, isMaximizing){
