@@ -1,8 +1,14 @@
-<!doctype html>
-<html>
-  <head><title>Meine Seite</title></head>
-  <body>
-    <h1>Hallo Welt</h1>
-    <p>Das ist meine erste Webseite.</p>
-  </body>
-</html>
+# Webseite
+
+Kleine Demo-Webseite mit Tic‑Tac‑Toe-Spiel gegen einen Computer.
+
+So öffnest du das Spiel:
+
+- Öffne die Datei [index.html](index.html) im Browser (Doppelklick oder `Live Server`).
+
+Spielbeschreibung:
+
+- Du spielst als X, der Computer ist O.
+- Der Computer verwendet Minimax und spielt optimal.
+
+Viel Spaß!
