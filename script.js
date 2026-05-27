@@ -5,13 +5,20 @@ const scoreHumanEl = document.getElementById('score-human-val');
 const scoreAiEl = document.getElementById('score-ai-val');
 const scoreTieEl = document.getElementById('score-tie-val');
 const resetScoresBtn = document.getElementById('reset-scores');
+const victoryOverlay = document.getElementById('victory-overlay');
+const lossOverlay = document.getElementById('loss-overlay');
 let board = Array(9).fill(null);
 let human = 'X';
 let ai = 'O';
+// Wahrscheinlichkeit, dass die KI einen suboptimalen Zug wählt.
+// Höherer Wert macht das Spiel einfacher für den Spieler.
+const AI_MISTAKE_RATE = 0.6;
 let gameOver = false;
 let scores = { human: 0, ai: 0, tie: 0 };
 
 function init(){
+  clearVictoryAnimation();
+  clearLossScreen();
   boardEl.innerHTML = '';
   board = Array(9).fill(null);
   gameOver = false;
@@ -83,7 +90,13 @@ function endGame(){
       scores.tie++;
     } else {
       statusEl.textContent = winner === human ? 'Du gewinnst!' : 'Computer gewinnt';
-      if(winner === human) scores.human++; else scores.ai++;
+      if(winner === human){
+        scores.human++;
+        showVictoryAnimation();
+      } else {
+        scores.ai++;
+        showLossScreen();
+      }
       highlightWinningCells(winningLine(board));
     }
     saveScores();
@@ -123,19 +136,64 @@ function highlightWinningCells(line){
   }
 }
 
+function showVictoryAnimation(){
+  if(!victoryOverlay) return;
+  victoryOverlay.classList.add('visible');
+  victoryOverlay.classList.remove('hidden');
+  for(let i=0;i<18;i++){
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = `${Math.random()*100}vw`;
+    piece.style.background = ['#ff4d6d','#ffd700','#4d8cff','#79ff8c','#ff8c4d'][Math.floor(Math.random()*5)];
+    piece.style.animationDuration = `${1.2 + Math.random()*0.8}s`;
+    piece.style.transform = `translateY(${Math.random()*-20}px) rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(piece);
+    setTimeout(()=> piece.remove(), 1800);
+  }
+  setTimeout(clearVictoryAnimation, 2200);
+}
+
+function showLossScreen(){
+  if(!lossOverlay) return;
+  lossOverlay.classList.add('visible');
+  lossOverlay.classList.remove('hidden');
+}
+
+function clearLossScreen(){
+  if(!lossOverlay) return;
+  lossOverlay.classList.remove('visible');
+  lossOverlay.classList.add('hidden');
+}
+
+function clearVictoryAnimation(){
+  if(!victoryOverlay) return;
+  victoryOverlay.classList.remove('visible');
+  victoryOverlay.classList.add('hidden');
+  document.querySelectorAll('.confetti-piece').forEach(el => el.remove());
+}
+
 // Minimax für perfekten Computergegner
 function bestMove(){
-  let bestScore = -Infinity;
-  let move = null;
+  const moves = [];
   for(let i=0;i<9;i++){
     if(!board[i]){
       board[i]=ai;
       const score = minimax(board, 0, false);
       board[i]=null;
-      if(score>bestScore){ bestScore=score; move=i }
+      moves.push({ idx: i, score });
     }
   }
-  return move ?? board.findIndex(x=>!x);
+  if(moves.length === 0) return board.findIndex(x=>!x);
+  moves.sort((a,b)=>b.score - a.score);
+  const bestScore = moves[0].score;
+  const bestMoves = moves.filter(m=>m.score===bestScore).map(m=>m.idx);
+  // Mit einer Wahrscheinlichkeit macht die KI absichtlich einen suboptimalen Zug
+  if(Math.random() < AI_MISTAKE_RATE && moves.length > 1){
+    const nonBest = moves.filter(m=>m.score < bestScore).map(m=>m.idx);
+    if(nonBest.length > 0) return nonBest[Math.floor(Math.random()*nonBest.length)];
+  }
+  // sonst einen zufälligen besten Zug wählen (falls mehrere gleich gut sind)
+  return bestMoves[Math.floor(Math.random()*bestMoves.length)];
 }
 
 function minimax(b, depth, isMaximizing){
