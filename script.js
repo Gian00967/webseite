@@ -10,9 +10,9 @@ const lossOverlay = document.getElementById('loss-overlay');
 let board = Array(9).fill(null);
 let human = 'X';
 let ai = 'O';
-// Wahrscheinlichkeit, dass die KI einen suboptimalen Zug wählt.
-// Höherer Wert macht das Spiel einfacher für den Spieler.
-const AI_MISTAKE_RATE = 0.6;
+// KI spielt optimal nur mit 50 % Wahrscheinlichkeit.
+// So bleibt die Gewinnchance näher bei 50 %.
+const AI_OPTIMAL_RATE = 0.5;
 let gameOver = false;
 let scores = { human: 0, ai: 0, tie: 0 };
 
@@ -188,7 +188,7 @@ function bestMove(){
   const bestScore = moves[0].score;
   const bestMoves = moves.filter(m=>m.score===bestScore).map(m=>m.idx);
   // Mit einer Wahrscheinlichkeit macht die KI absichtlich einen suboptimalen Zug
-  if(Math.random() < AI_MISTAKE_RATE && moves.length > 1){
+  if(Math.random() >= AI_OPTIMAL_RATE && moves.length > 1){
     const nonBest = moves.filter(m=>m.score < bestScore).map(m=>m.idx);
     if(nonBest.length > 0) return nonBest[Math.floor(Math.random()*nonBest.length)];
   }
