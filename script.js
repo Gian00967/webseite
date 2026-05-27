@@ -100,6 +100,7 @@ function endGame(){
         showLossScreen();
       }
       highlightWinningCells(winningLine(board));
+      statusEl.textContent = 'Neues Spiel startet in Kürze...';
     }
     saveScores();
     renderScores();
@@ -182,14 +183,17 @@ function clearAutoRestart(){
   }
 }
 
+function restartGame(){
+  clearAutoRestart();
+  clearVictoryAnimation();
+  clearLossScreen();
+  init();
+  render();
+}
+
 function scheduleNextRound(){
   clearAutoRestart();
-  autoRestartTimeout = setTimeout(()=>{
-    clearVictoryAnimation();
-    clearLossScreen();
-    init();
-    render();
-  }, 1200);
+  autoRestartTimeout = setTimeout(restartGame, 800);
 }
 
 // Minimax für perfekten Computergegner
@@ -238,7 +242,14 @@ function minimax(b, depth, isMaximizing){
   }
 }
 
-restartBtn.addEventListener('click', ()=>{ init(); render(); });
+restartBtn.addEventListener('click', ()=>{ restartGame(); });
+
+if(victoryOverlay){
+  victoryOverlay.addEventListener('click', restartGame);
+}
+if(lossOverlay){
+  lossOverlay.addEventListener('click', restartGame);
+}
 
 resetScoresBtn && resetScoresBtn.addEventListener('click', ()=>{
   scores = { human:0, ai:0, tie:0 };
